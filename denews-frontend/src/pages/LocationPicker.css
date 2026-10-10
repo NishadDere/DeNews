@@ -1,0 +1,14 @@
+.loc-picker { margin-bottom: 16px; }
+.loc-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+.loc-title { font-size: 14px; font-weight: 600; color: #cbd5c9; }
+.loc-actions { display: flex; gap: 8px; }
+.loc-btn {
+  background: rgba(74,222,128,0.1); color: #4ade80;
+  border: 1px solid rgba(74,222,128,0.3); border-radius: 8px;
+  padding: 6px 12px; font-size: 13px; cursor: pointer;
+}
+.loc-btn:disabled { opacity: 0.6; cursor: default; }
+.loc-btn-clear { background: rgba(248,113,113,0.1); color: #f87171; border-color: rgba(248,113,113,0.3); }
+.loc-map { width: 100%; height: 260px; border-radius: 10px; overflow: hidden; }
+.loc-hint { font-size: 12px; color: #6b7f69; margin: 8px 0 0; }
+.loc-error { font-size: 12px; color: #f87171; margin: 4px 0 0; }
