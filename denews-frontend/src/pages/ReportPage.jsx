@@ -107,13 +107,15 @@ function ResultCard({ result }) {
 }
 
 export default function ReportPage() {
-  const [description, setDescription] = useState('')
-  const [language,    setLanguage]    = useState('en')
-  const [loading,     setLoading]     = useState(false)
-  const [result,      setResult]      = useState(null)
-  const [error,       setError]       = useState(null)
-  const [charCount,   setCharCount]   = useState(0)
-  const [location, setLocation] = useState(null)
+  const [description,  setDescription]  = useState('')
+  const [language,     setLanguage]     = useState('en')
+  const [loading,      setLoading]      = useState(false)
+  const [result,       setResult]       = useState(null)
+  const [error,        setError]        = useState(null)
+  const [charCount,    setCharCount]    = useState(0)
+  const [location,     setLocation]     = useState(null)
+  const [photoFile,    setPhotoFile]    = useState(null)
+  const [photoPreview, setPhotoPreview] = useState(null)
 
   const handleChange = (e) => {
     setDescription(e.target.value)
@@ -127,6 +129,18 @@ export default function ReportPage() {
     setError(null)
   }
 
+  const handlePhoto = (e) => {
+    const f = e.target.files?.[0]
+    if (!f) return
+    if (f.size > 5 * 1024 * 1024) {
+      setError('Image must be under 5 MB')
+      return
+    }
+    setError(null)
+    setPhotoFile(f)
+    setPhotoPreview(URL.createObjectURL(f))
+  }
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     if (!description.trim()) return
@@ -136,18 +150,31 @@ export default function ReportPage() {
     setError(null)
 
     try {
+      let photo_url = null
+      if (photoFile) {
+        const fd = new FormData()
+        fd.append('file', photoFile)
+        const up = await fetch(`${API_BASE}/uploads`, { method: 'POST', body: fd })
+        if (!up.ok) {
+          const err = await up.json().catch(() => ({}))
+          throw new Error(err.detail || 'Photo upload failed')
+        }
+        photo_url = (await up.json()).photo_url
+      }
+
       const res = await fetch(`${API_BASE}/concerns`, {
         method:  'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-        description: description.trim(),
-        language,
-        ...(location && {
-        latitude: location.latitude,
-        longitude: location.longitude,
-        location_source: location.source,
-  }),
-}),
+          description: description.trim(),
+          language,
+          ...(location && {
+            latitude: location.latitude,
+            longitude: location.longitude,
+            location_source: location.source,
+          }),
+          ...(photo_url && { photo_url }),
+        }),
       })
 
       if (!res.ok) {
@@ -170,6 +197,8 @@ export default function ReportPage() {
     setResult(null)
     setError(null)
     setLocation(null)
+    setPhotoFile(null)
+    setPhotoPreview(null)
   }
 
   return (
@@ -235,7 +264,9 @@ export default function ReportPage() {
                   <option value="mr">🌸 Marathi</option>
                 </select>
               </div>
+
               <LocationPicker value={location} onChange={setLocation} />
+
               <div className="textarea-wrap">
                 <textarea
                   className="report-textarea"
@@ -249,14 +280,29 @@ export default function ReportPage() {
                 <div className="char-count">{charCount} / 1000</div>
               </div>
 
+              <div className="photo-field">
+                <label className="photo-label">
+                  📷 {photoFile ? 'Change photo' : 'Add a photo (optional)'}
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/webp"
+                    onChange={handlePhoto}
+                    hidden
+                  />
+                </label>
+                {photoPreview && <img src={photoPreview} alt="Preview" className="photo-preview" />}
+              </div>
+
               {error && (
                 <div className="form-error">
                   <span>⚠️</span> {error}
                 </div>
               )}
+
               {!location && (
-               <p className="form-note">Drop a pin or use your location before submitting.</p>
+                <p className="form-note">Drop a pin or use your location before submitting.</p>
               )}
+
               <button
                 type="submit"
                 className={`submit-btn ${loading ? 'loading' : ''}`}

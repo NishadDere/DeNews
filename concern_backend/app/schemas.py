@@ -18,6 +18,7 @@ class ConcernCreate(BaseModel):
     address:          Optional[str]   = None
     location_source:  Optional[str]   = None   # "photo" | "pin" | "manual"
     photo_media_id:   Optional[str]   = None   # Meta media ID
+    photo_url:        Optional[str]   = None
     cause:            Optional[str]   = None
     solution:         Optional[str]   = None
     is_urgent:        Optional[bool]  = False
@@ -72,6 +73,7 @@ class Concern(BaseModel):
     hitl_flagged: bool = False
     confidence: Optional[float] = None
     cluster_id: Optional[UUID] = None
+    photo_url: Optional[str] = None 
     location: Optional[ConcernLocation] = None
 
     model_config = ConfigDict(from_attributes=True)

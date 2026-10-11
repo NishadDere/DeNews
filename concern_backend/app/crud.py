@@ -318,6 +318,7 @@ def create_concern(db: Session, data, extraction=None):
         embedding=embedding,                              # NEW — store vector
         location_source=(data.location_source if hasattr(data, "location_source") else None),
         photo_media_id=(data.photo_media_id   if hasattr(data, "photo_media_id")  else None),
+        photo_url=(data.photo_url             if hasattr(data, "photo_url")       else None),
         is_urgent=is_urgent,
         urgency_score=urgency_score,
         cause=(data.cause       if hasattr(data, "cause")       else None),

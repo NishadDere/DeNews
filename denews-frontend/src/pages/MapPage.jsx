@@ -15,14 +15,14 @@ export default function MapPage() {
   const [selected, setSelected] = useState(null)
 
   const groups = useMemo(() => {
-  const byKey = new Map()
-  concerns.forEach(c => {
-    const key = `${c.location.latitude.toFixed(4)},${c.location.longitude.toFixed(4)}`
-    if (!byKey.has(key)) byKey.set(key, [])
-    byKey.get(key).push(c)
-  })
-  return [...byKey.values()]
-}, [concerns])
+    const byKey = new Map()
+    concerns.forEach(c => {
+      const key = `${c.location.latitude.toFixed(4)},${c.location.longitude.toFixed(4)}`
+      if (!byKey.has(key)) byKey.set(key, [])
+      byKey.get(key).push(c)
+    })
+    return [...byKey.values()]
+  }, [concerns])
 
   useEffect(() => {
     fetch(`${API_BASE}/concerns`)
@@ -35,40 +35,40 @@ export default function MapPage() {
       .finally(() => setLoading(false))
   }, [])
 
- useEffect(() => {
-  const map = new maplibregl.Map({
-    container: mapContainer.current,
-    style: 'https://tiles.openfreemap.org/styles/liberty',
-    center: PUNE_CENTER,
-    zoom: 12,
-  })
-  map.addControl(new maplibregl.NavigationControl(), 'top-right')
-  mapRef.current = map
+  useEffect(() => {
+    const map = new maplibregl.Map({
+      container: mapContainer.current,
+      style: 'https://tiles.openfreemap.org/styles/liberty',
+      center: PUNE_CENTER,
+      zoom: 12,
+    })
+    map.addControl(new maplibregl.NavigationControl(), 'top-right')
+    mapRef.current = map
 
-  return () => {
-    map.remove()
-    mapRef.current = null
-  }
-}, [])
+    return () => {
+      map.remove()
+      mapRef.current = null
+    }
+  }, [])
 
   useEffect(() => {
-  const map = mapRef.current
-  if (!map || groups.length === 0) return
+    const map = mapRef.current
+    if (!map || groups.length === 0) return
 
-  const markers = groups.map(group => {
-    const first = group[0]
-    const el = document.createElement('div')
-    el.className = `map-marker ${group.some(c => c.is_urgent) ? 'marker-urgent' : ''} ${group.length > 1 ? 'marker-multi' : ''}`
-    if (group.length > 1) el.textContent = group.length
-    el.addEventListener('click', () => setSelected(group))
+    const markers = groups.map(group => {
+      const first = group[0]
+      const el = document.createElement('div')
+      el.className = `map-marker ${group.some(c => c.is_urgent) ? 'marker-urgent' : ''} ${group.length > 1 ? 'marker-multi' : ''}`
+      if (group.length > 1) el.textContent = group.length
+      el.addEventListener('click', () => setSelected(group))
 
-    return new maplibregl.Marker({ element: el })
-      .setLngLat([first.location.longitude, first.location.latitude])
-      .addTo(map)
-  })
+      return new maplibregl.Marker({ element: el })
+        .setLngLat([first.location.longitude, first.location.latitude])
+        .addTo(map)
+    })
 
-  return () => markers.forEach(m => m.remove())
-}, [groups])
+    return () => markers.forEach(m => m.remove())
+  }, [groups])
 
   return (
     <div className="map-page">
@@ -78,24 +78,31 @@ export default function MapPage() {
       {error && <div className="map-overlay map-error">{error}</div>}
 
       {selected && (
-  <div className="map-detail-card">
-    <button className="map-detail-close" onClick={() => setSelected(null)}>×</button>
-    <h3>{selected.length} report{selected.length > 1 ? 's' : ''} here</h3>
-    <div className="map-detail-list">
-      {selected.map(c => (
-        <div key={c.id} className="map-detail-item">
-          <strong>{c.issue_type || 'Issue'}</strong>
-          <p>{c.description}</p>
-          <div className="map-detail-meta">
-            <span>{c.status}</span>
-            {c.is_urgent && <span>⚡ Urgent</span>}
-            <span>{new Date(c.created_at).toLocaleDateString()}</span>
+        <div className="map-detail-card">
+          <button className="map-detail-close" onClick={() => setSelected(null)}>×</button>
+          <h3>{selected.length} report{selected.length > 1 ? 's' : ''} here</h3>
+          <div className="map-detail-list">
+            {selected.map(c => (
+              <div key={c.id} className="map-detail-item">
+                <strong>{c.issue_type || 'Issue'}</strong>
+                <p>{c.description}</p>
+                {c.photo_url && (
+                  <img
+                    src={c.photo_url}
+                    alt=""
+                    style={{ width: '100%', maxHeight: 140, objectFit: 'cover', borderRadius: 8, marginTop: 6 }}
+                  />
+                )}
+                <div className="map-detail-meta">
+                  <span>{c.status}</span>
+                  {c.is_urgent && <span>⚡ Urgent</span>}
+                  <span>{new Date(c.created_at).toLocaleDateString()}</span>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-      ))}
-    </div>
-  </div>
-)}
+      )}
     </div>
   )
 }

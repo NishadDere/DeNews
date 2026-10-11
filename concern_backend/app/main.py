@@ -1,9 +1,10 @@
-from fastapi import FastAPI, Depends, HTTPException, Query
+from fastapi import FastAPI, Depends, HTTPException, Query, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy.orm import Session
 from .database import get_db
 from . import crud, schemas
 from .services.llm_extractor import extract_concern_from_text
+from .services.storage import upload_photo, ALLOWED, MAX_BYTES
 from typing import List
 from uuid import UUID
 
@@ -18,6 +19,21 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# ── PHOTO UPLOAD ──────────────────────────────────────────────────────────────
+@app.post("/uploads")
+async def upload_image(file: UploadFile = File(...)):
+    if file.content_type not in ALLOWED:
+        raise HTTPException(status_code=400, detail="Only JPEG, PNG or WebP images are allowed")
+    data = await file.read()
+    if len(data) > MAX_BYTES:
+        raise HTTPException(status_code=400, detail="Image must be under 5 MB")
+    try:
+        url = upload_photo(data, file.content_type)
+    except Exception as e:
+        print(f"[uploads] failed: {e}")
+        raise HTTPException(status_code=500, detail="Photo upload failed")
+    return {"photo_url": url}
 
 # ── CREATE CONCERN ────────────────────────────────────────────────────────────
 @app.post("/concerns")

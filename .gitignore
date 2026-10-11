@@ -17,3 +17,5 @@ dist/
 
 # skipped for now
 whatsapp_service/
+
+concern_backend/run_migration.py

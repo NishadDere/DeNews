@@ -64,6 +64,7 @@ class Concern(Base):
     # ── WhatsApp / NagarVaani fields ──────────────────────────────────────────
     location_source  = Column(String, nullable=True)
     photo_media_id   = Column(String, nullable=True)
+    photo_url        = Column(String, nullable=True) 
     is_urgent        = Column(Boolean, default=False, nullable=False)
     urgency_score    = Column(Float, nullable=True)
     confidence       = Column(Float, nullable=True)
