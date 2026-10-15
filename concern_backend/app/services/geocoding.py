@@ -11,11 +11,11 @@ def get_coordinates(location_text: str):
 
     url = "https://us1.locationiq.com/v1/search.php"
     params = {
-        "key": api_key,
-        "q": location_text,
-        "format": "json",
-        "limit": 1,
-        "countrycodes": "in",
+        'key': api_key,
+        'q': location_text,
+        'format': 'json',
+        'limit': 1,
+        'countrycodes': 'in',
     }
 
     try:

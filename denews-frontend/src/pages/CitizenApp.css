@@ -1,0 +1,11 @@
+@layer theme;
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" source(none);
+@source "./CitizenApp.jsx";
+@source "../web";
+
+.nv-root, .nv-root * { box-sizing: border-box; }
+.nv-root { font-family: system-ui, -apple-system, 'Segoe UI', sans-serif; }
+.nv-root button { font-family: inherit; cursor: pointer; }
+.nv-root input { font-family: inherit; }
+.nv-map-wrap .map-page { height: 100%; }

@@ -4,6 +4,7 @@ from google import genai
 from google.genai import types
 from app.services.llm_prompt import CONCERN_EXTRACTION_PROMPT
 from app.schemas import ExtractedConcern
+import time
 
 # Initialize client
 api_key = os.getenv("GEMINI_API_KEY")
@@ -22,19 +23,38 @@ def clean_json_string(text: str) -> str:
     return cleaned.strip()
 
 
+MODELS = [
+    m.strip()
+    for m in os.getenv("GEMINI_MODELS", "gemini-3.5-flash,gemini-flash-latest,gemini-2.5-flash").split(",")
+    if m.strip()
+]
+RETRIES_PER_MODEL = 2
+RETRYABLE = ("503", "UNAVAILABLE", "429", "RESOURCE_EXHAUSTED", "500", "INTERNAL", "DEADLINE")
+
+
 def call_llm_real(prompt: str) -> str:
     if not api_key:
         raise ValueError("GEMINI_API_KEY not found in environment variables.")
-    try:
-        response = client.models.generate_content(
-        model="gemini-3.5-flash",
-        contents=prompt,
-        config=types.GenerateContentConfig(temperature=0.1),
-       )
-        return response.text
-    except Exception as e:
-        print(f"Gemini API Error: {e}")
-        raise e
+
+    last_error = None
+    for model in MODELS:
+        for attempt in range(RETRIES_PER_MODEL + 1):
+            try:
+                response = client.models.generate_content(
+                    model=model,
+                    contents=prompt,
+                    config=types.GenerateContentConfig(temperature=0.1),
+                )
+                return response.text
+            except Exception as e:
+                last_error = e
+                msg = str(e)
+                print(f"[llm] {model} attempt {attempt + 1} failed: {msg[:120]}")
+                if any(k in msg for k in RETRYABLE) and attempt < RETRIES_PER_MODEL:
+                    time.sleep(1.5 * (2 ** attempt))   # waits 1.5s, then 3s
+                    continue
+                break   # not retryable, or retries used up: try the next model
+    raise last_error
 
 
 def extract_concern_from_text(text: str, language: str = "en") -> ExtractedConcern:

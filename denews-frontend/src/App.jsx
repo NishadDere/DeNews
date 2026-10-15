@@ -1,40 +1,30 @@
-import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom'
-import ReportPage from './pages/ReportPage.jsx'
-import DashboardPage from './pages/DashboardPage.jsx'
-import './App.css'
-import MapPage from './pages/MapPage.jsx'
+import { BrowserRouter, Routes, Route } from 'react-router-dom'
+import CitizenApp from './pages/CitizenApp.jsx'
+import WebLayout from './web/WebLayout.jsx'
+import ConcernsPage from './web/ConcernsPage.jsx'
+import TopKPage from './web/TopKPage.jsx'
+import ReportsPage from './web/ReportsPage.jsx'
+import MapView from './web/MapView.jsx'
+import ReportIssuePage from './web/ReportIssuePage.jsx'
+import AdminPage from './web/AdminPage.jsx'
 
 export default function App() {
   return (
     <BrowserRouter>
-      <div className="app-shell">
-        <header className="navbar">
-          <div className="navbar-brand">
-            <span className="brand-dot" />
-            <span className="brand-name">NagarVaani</span>
-            <span className="brand-tag">Civic AI</span>
-          </div>
-          <nav className="navbar-links">
-            <NavLink to="/" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-              Report Issue
-            </NavLink>
-            <NavLink to="/dashboard" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-              Dashboard
-            </NavLink>
-            <NavLink to="/map" className={({ isActive }) => isActive ? 'nav-link active' : 'nav-link'}>
-              Map
-            </NavLink>
-          </nav>
-        </header>
+      <Routes>
+        {/* Mobile layout */}
+        <Route path="/app" element={<CitizenApp />} />
 
-        <main className="main-content">
-          <Routes>
-            <Route path="/" element={<ReportPage />} />
-            <Route path="/dashboard" element={<DashboardPage />} />
-            <Route path="/map" element={<MapPage />} />
-          </Routes>
-        </main>
-      </div>
+        {/* Website layout */}
+        <Route element={<WebLayout />}>
+          <Route path="/" element={<ConcernsPage />} />
+          <Route path="/top" element={<TopKPage />} />
+          <Route path="/map" element={<MapView />} />
+          <Route path="/reports" element={<ReportsPage />} />
+          <Route path="/report" element={<ReportIssuePage />} />
+          <Route path="/admin" element={<AdminPage />} />
+        </Route>
+      </Routes>
     </BrowserRouter>
   )
 }

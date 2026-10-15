@@ -49,9 +49,20 @@ def create_concern(data: schemas.ConcernCreate, db: Session = Depends(get_db)):
     except Exception as e:
         print(f"⚠️ AI Extraction failed: {e}")
 
-    concern, conversation, cluster, is_duplicate, duplicate_count = crud.create_concern(
-        db, data, extraction
-    )
+    try:
+        concern, conversation, cluster, is_duplicate, duplicate_count = crud.create_concern(
+            db, data, extraction
+        )
+    except crud.LocationNotFound:
+        if extraction is None:
+            raise HTTPException(
+                status_code=503,
+                detail="Our AI service is busy right now. Please try again in a moment, or drop a pin on the map.",
+            )
+        raise HTTPException(
+            status_code=422,
+            detail="We couldn't work out where this is. Mention the area in your description or drop a pin on the map.",
+        )
 
     # HITL flag: confidence below threshold
     hitl_flagged = (extraction.confidence < 0.85) if extraction else True

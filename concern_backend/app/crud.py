@@ -21,6 +21,36 @@ CLUSTER_RADIUS_KM    = 0.15    # 150m — accounts for WhatsApp location impreci
 SIMILARITY_THRESHOLD = 0.85    # cosine similarity threshold for semantic match
 
 
+class LocationNotFound(Exception):
+    pass
+
+
+def resolve_coordinates(data, extraction):
+    """Pin wins. Otherwise geocode the AI-extracted area. Returns (lat, lng) or None."""
+    lat = getattr(data, "latitude", None)
+    lng = getattr(data, "longitude", None)
+    if lat is not None and lng is not None:
+        return lat, lng
+
+    loc = extraction.location if extraction and extraction.location else None
+    if not loc or not (loc.sub_locality or loc.locality):
+        return None  # nothing more specific than "Pune": don't guess
+
+    city = loc.city or "Pune"
+    candidates = []
+    if loc.sub_locality and loc.locality:
+        candidates.append(f"{loc.sub_locality}, {loc.locality}, {city}")
+    if loc.locality:
+        candidates.append(f"{loc.locality}, {city}")
+    if loc.sub_locality:
+        candidates.append(f"{loc.sub_locality}, {city}")
+
+    for q in candidates:
+        g_lat, g_lng = get_coordinates(q)
+        if g_lat is not None and g_lng is not None:
+            return g_lat, g_lng
+    return None
+
 # ── HELPERS ───────────────────────────────────────────────────────────────────
 
 def get_or_create_test_user(db: Session):
@@ -204,22 +234,12 @@ def create_concern(db: Session, data, extraction=None):
     get_or_create_test_user(db)
 
     # 1. RESOLVE COORDINATES
-    lat = data.latitude  if (hasattr(data, "latitude")  and data.latitude  is not None) else None
-    lng = data.longitude if (hasattr(data, "longitude") and data.longitude is not None) else None
-
-    if lat is None or lng is None:
-       location_text = None
-    if extraction and extraction.location:
-        location_text = ", ".join(filter(None, [
-            extraction.location.locality, extraction.location.city
-        ]))
-    if location_text:
-        geo_lat, geo_lng = get_coordinates(location_text)
-        lat, lng = geo_lat or 0.0, geo_lng or 0.0
-    else:
-        lat, lng = 0.0, 0.0
-    
-    print(f"[crud] coords used: lat={lat}, lng={lng}, provided={data.latitude is not None}, source={getattr(data, 'location_source', None)}")
+        # 1. RESOLVE COORDINATES
+    coords = resolve_coordinates(data, extraction)
+    if coords is None:
+        raise LocationNotFound()
+    lat, lng = coords
+    print(f"[crud] coords used: lat={lat}, lng={lng}, pin_provided={getattr(data, 'latitude', None) is not None}")
     
     # 2. GENERATE EMBEDDING
     # Embed the description so we can semantically match future reports
